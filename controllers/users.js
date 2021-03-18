@@ -1,16 +1,17 @@
 const bcrypt = require('bcrypt');
-const { User, validate} = require('../models/users');
+const {User, validate} = require('../models/users');
+const auth = require('../middleware/auth');
 const _ = require('lodash');
 
 exports.registerUser = (async(req, res)=>{
-    const error = validate(req);
+    const error = validate(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
     }
 
-    let user = await User.findOne({email: req.body.email});
+    let user = await User.findOne({email: req.body.email})
     if(user) {
-        res.status(400).send('User already registered')
+        res.status(400).send('User already registered');
     }
 
      user = new User ({
@@ -20,10 +21,10 @@ exports.registerUser = (async(req, res)=>{
      });
 
      const salt = await bcrypt.genSalt(10);
-     user.password = await bcrypt.hash('user.password', salt);
-    await user.save();
+     user.password = await bcrypt.hash(user.password, salt);
+     await user.save();
 
-    const token = user.generateAuthToken;
+    const token = user.generateAuthToken();
     res.header('x-auth-token', token).json({user});
 
 });
@@ -57,11 +58,12 @@ exports.updateUser = (async(req, res)=>{
     res.json({user});
 });
 
-exports.deleteUser = (async(req, res) =>{
+exports.deleteUser = (auth, async(req, res) =>{
     const user = await User.findByIdAndRemove(req.body._id).sort("name");
     if(!user){
-        res.status(400).json({error: 'failed to delete ${user.name}' });
+        res.status(400).json({error: `failed to delete ${user.name}` });
     }
-    res.json({message: '${user.name} deleted successfully', deleteUser})
-})
+    res.json({message: `${user.name} deleted successfully`, deleteUser})
+});
+
 

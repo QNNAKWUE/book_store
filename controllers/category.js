@@ -1,7 +1,7 @@
 const {Category, validate} = require('../models/category');
-const {auth} = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
-exports.createCategory = (async(req, res)=>{
+exports.createCategory = (auth, async (req, res)=>{
    const error = validate(req.body);
    if(error){
        res.status(400).send(error.details[0].message);
